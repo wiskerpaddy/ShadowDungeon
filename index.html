@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ja">
+<html lang="es">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Shadow Dungeon RL</title>
+    <title>Shadow Dungeon RL - Edición Española</title>
     <style>
         body {
             background-color: #0a0a0a;
@@ -29,7 +29,7 @@
             letter-spacing: 2px;
             white-space: pre;
             margin-bottom: 20px;
-            color: #3f3; /* ターミナル風の緑 */
+            color: #3f3; 
         }
         #log {
             height: 100px;
@@ -56,7 +56,7 @@
 </div>
 
 <script>
-    // --- 設定 ---
+    // --- Configuración ---
     const WIDTH = 40;
     const HEIGHT = 18;
     const MAX_DEPTH = 5;
@@ -83,17 +83,17 @@
     };
 
     const monsterPool = [
-        { name: '影のネズミ', tile: 'r', hp: 5, atk: 2, exp: 4, color: '#999' },
-        { name: '彷徨う鎧', tile: 'A', hp: 12, atk: 5, exp: 10, color: '#aaa' },
-        { name: '深淵の眼', tile: 'e', hp: 20, atk: 8, exp: 20, color: '#f55' }
+        { name: 'Rata Sombría', tile: 'r', hp: 5, atk: 2, exp: 4, color: '#999' },
+        { name: 'Armadura Errante', tile: 'A', hp: 12, atk: 5, exp: 10, color: '#aaa' },
+        { name: 'Ojo del Abismo', tile: 'e', hp: 20, atk: 8, exp: 20, color: '#f55' }
     ];
 
-    const bossData = { name: '古の守護者', tile: 'Ω', hp: 60, atk: 12, exp: 0, color: '#f0f' };
+    const bossData = { name: 'El Guardián Antiguo', tile: 'Ω', hp: 60, atk: 12, exp: 0, color: '#f0f' };
 
-    // --- ロジック ---
+    // --- Lógica del Juego ---
 
     function init() {
-        addLog("影の迷宮へ足を踏み入れた...", 'log-system');
+        addLog("Has entrado en la Mazmorra de las Sombras...", 'log-system');
         gameState.depth = 1;
         gameState.player = { x: 0, y: 0, hp: 25, maxHp: 25, atk: 5, exp: 0, lv: 1, nextExp: 15 };
         gameState.gameOver = false;
@@ -115,7 +115,7 @@
                 const boss = { ...bossData, x, y };
                 gameState.map[y][x] = TILE_BOSS;
                 gameState.monsters.push(boss);
-                addLog("最深部の空気が震えている...", 'log-boss');
+                addLog("El aire vibra en lo más profundo...", 'log-boss');
             });
         }
 
@@ -175,7 +175,7 @@
         const screen = document.getElementById('screen');
         let view = "";
         const p = gameState.player;
-        let hud = `LEVEL:${p.lv}  HP:${p.hp}/${p.maxHp}  ATK:${p.atk}  EXP:${p.exp}/${p.nextExp}  FLOOR:${gameState.depth}F\n`;
+        let hud = `NIVEL:${p.lv}  HP:${p.hp}/${p.maxHp}  ATK:${p.atk}  EXP:${p.exp}/${p.nextExp}  PISO:${gameState.depth}F\n`;
         
         for (let y = 0; y < HEIGHT; y++) {
             for (let x = 0; x < WIDTH; x++) {
@@ -244,15 +244,15 @@
 
         const tile = gameState.map[ny][nx];
         if (tile === TILE_WALL) {
-            addLog("道が塞がれている。", 'log-system');
+            addLog("El camino está bloqueado.", 'log-system');
         } else if (tile === TILE_MONSTER || tile === TILE_BOSS) {
             const m = gameState.monsters.find(m => m.x === nx && m.y === ny);
             if (m) {
                 const dmg = gameState.player.atk + Math.floor(Math.random() * 3);
                 m.hp -= dmg;
-                addLog(`${m.name}に ${dmg} の打撃を与えた！`, 'log-player');
+                addLog(`¡Atacas a ${m.name} causando ${dmg} de daño!`, 'log-player');
                 if (m.hp <= 0) {
-                    addLog(`${m.name}を消し去った。`, 'log-system');
+                    addLog(`Has derrotado a ${m.name}.`, 'log-system');
                     gainExp(m.exp);
                     gameState.map[m.y][m.x] = TILE_FLOOR;
                     gameState.monsters = gameState.monsters.filter(mon => mon !== m);
@@ -265,11 +265,11 @@
             gameState.player.y = ny;
             if (tile === TILE_POTION) {
                 gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + 10);
-                addLog("ポーションを回収。傷が癒えた。", 'log-player');
+                addLog("Recoges una poción. Tus heridas sanan.", 'log-player');
                 gameState.map[ny][nx] = TILE_FLOOR;
             } else if (tile === TILE_STAIRS) {
                 gameState.depth++;
-                addLog(`深層へ降りる... (${gameState.depth}F)`, 'log-system');
+                addLog(`Bajando al nivel inferior... (${gameState.depth}F)`, 'log-system');
                 setupLevel();
                 return;
             }
@@ -289,7 +289,7 @@
             p.atk += 3;
             p.exp -= p.nextExp;
             p.nextExp = Math.floor(p.nextExp * 1.6);
-            addLog(`レベルアップ！ 強さが身に染みる (Lv${p.lv})`, 'log-lvup');
+            addLog(`¡Subiste de nivel! Sientes más poder (Nv${p.lv})`, 'log-lvup');
         }
     }
 
@@ -301,7 +301,7 @@
             if (dist === 1) {
                 const dmg = Math.max(1, m.atk - Math.floor(Math.random() * 2));
                 gameState.player.hp -= dmg;
-                addLog(`${m.name}の攻撃！ ${dmg} の傷を負った。`, 'log-enemy');
+                addLog(`¡${m.name} ataca! Sufres ${dmg} de daño.`, 'log-enemy');
                 if (gameState.player.hp <= 0) endGame(false);
             } else if (dist <= 5) {
                 let mx = m.x + (dx > 0 ? 1 : dx < 0 ? -1 : 0);
@@ -319,7 +319,7 @@
         gameState.gameOver = true;
         draw();
         setTimeout(() => {
-            alert(win ? "守護者を倒し、迷宮の主となった！" : "力尽き、影に呑まれた...");
+            alert(win ? "¡Has derrotado al Guardián y conquistado la mazmorra!" : "Has caído... las sombras te consumen.");
             init();
         }, 100);
     }
