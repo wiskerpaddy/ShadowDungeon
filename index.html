@@ -102,22 +102,22 @@
         }
     };
 
-    let curLang = 'ja';
+    let curLang = 'en'; // デフォルトを英語にしておく
     let gameState = { depth: 1, player: {}, map: [], explored: [], monsters: [], log: [], gameOver: false, initialized: false };
 
+
+    // 言語設定関数
     function setLang(lang) {
         curLang = lang;
         const T = i18n[curLang];
-        document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
-        document.getElementById(`btn-${lang}`).classList.add('active');
         
-        const waitBtn = document.getElementById('wait');
-        waitBtn.textContent = T.wait;
-        waitBtn.style.fontSize = T.wait.length > 5 ? "10px" : "14px";
-
-        document.getElementById('skill').innerHTML = `${T.warpBtn}<br>(HP-5)`;
-        document.getElementById('g-title').textContent = T.gTitle;
-        document.getElementById('g-body').innerHTML = T.gBody;
+        // ボタンのアクティブ状態を更新
+        document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
+        const activeBtn = document.getElementById(`btn-${lang}`);
+        if(activeBtn) activeBtn.classList.add('active');
+        
+        // テキストの更新処理...
+        // (中略: 前回お渡しした setLang 内の処理)
         
         if (gameState.initialized) draw();
     }
@@ -304,7 +304,13 @@
     function closeGuide() { document.getElementById('guide-overlay').style.display = 'none'; if(!gameState.initialized) init(); }
     function endGame(win) { gameState.gameOver = true; alert(win ? i18n[curLang].win : i18n[curLang].lose); location.reload(); }
 
-    window.onload = () => { setLang('ja'); openGuide(); };
-</script>
+// --- ここが自動判定の部分 ---
+    window.onload = () => {
+        const browserLang = (navigator.language || navigator.userLanguage).split('-')[0];
+        const initialLang = ['ja', 'en', 'es'].includes(browserLang) ? browserLang : 'en';
+        
+        setLang(initialLang);
+        openGuide();
+    };</script>
 </body>
 </html>
