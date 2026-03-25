@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shadow Dungeon RL</title>
+    <style>
+        body {
+            background-color: #0a0a0a;
+            color: #d1d1d1;
+            font-family: 'Consolas', 'Monaco', 'Courier New', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            user-select: none;
+        }
+        #game-container {
+            text-align: center;
+            border: 2px solid #444;
+            padding: 20px;
+            background-color: #000;
+            box-shadow: 0 0 30px rgba(0,0,0,1);
+        }
+        #screen {
+            font-size: 18px;
+            line-height: 1.1;
+            letter-spacing: 2px;
+            white-space: pre;
+            margin-bottom: 20px;
+            color: #3f3; /* ターミナル風の緑 */
+        }
+        #log {
+            height: 100px;
+            overflow-y: hidden;
+            font-size: 14px;
+            color: #888;
+            text-align: left;
+            border-top: 1px solid #222;
+            padding-top: 10px;
+        }
+        .log-entry { margin-bottom: 4px; padding-left: 8px; border-left: 2px solid #333; }
+        .log-player { color: #fff; border-left-color: #fff; }
+        .log-enemy { color: #ff5555; border-left-color: #ff5555; }
+        .log-system { color: #55aaff; border-left-color: #55aaff; }
+        .log-boss { color: #ff55ff; font-weight: bold; border-left-color: #ff55ff; text-transform: uppercase; }
+        .log-lvup { color: #ffff55; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    <div id="screen"></div>
+    <div id="log"></div>
+</div>
+
+<script>
+    // --- 設定 ---
+    const WIDTH = 40;
+    const HEIGHT = 18;
+    const MAX_DEPTH = 5;
+    const VISION_RADIUS = 5; 
+
+    const TILE_WALL = '■';
+    const TILE_FLOOR = '·';
+    const TILE_PLAYER = '@';
+    const TILE_MONSTER = 'E';
+    const TILE_BOSS = 'Ω';
+    const TILE_STAIRS = '>';
+    const TILE_POTION = 'P';
+    const TILE_UNKNOWN = ' ';
+
+    let gameState = {
+        depth: 1,
+        player: { x: 0, y: 0, hp: 25, maxHp: 25, atk: 5, exp: 0, lv: 1, nextExp: 15 },
+        map: [], 
+        explored: [],
+        monsters: [],
+        items: [],
+        log: [],
+        gameOver: false
+    };
+
+    const monsterPool = [
+        { name: '影のネズミ', tile: 'r', hp: 5, atk: 2, exp: 4, color: '#999' },
+        { name: '彷徨う鎧', tile: 'A', hp: 12, atk: 5, exp: 10, color: '#aaa' },
+        { name: '深淵の眼', tile: 'e', hp: 20, atk: 8, exp: 20, color: '#f55' }
+    ];
+
+    const bossData = { name: '古の守護者', tile: 'Ω', hp: 60, atk: 12, exp: 0, color: '#f0f' };
+
+    // --- ロジック ---
+
+    function init() {
+        addLog("影の迷宮へ足を踏み入れた...", 'log-system');
+        gameState.depth = 1;
+        gameState.player = { x: 0, y: 0, hp: 25, maxHp: 25, atk: 5, exp: 0, lv: 1, nextExp: 15 };
+        gameState.gameOver = false;
+        setupLevel();
+    }
+
+    function setupLevel() {
+        gameState.map = generateMap();
+        gameState.explored = Array.from({ length: HEIGHT }, () => Array(WIDTH).fill(false));
+        gameState.monsters = [];
+        gameState.items = [];
+
+        placeOnFloor((x, y) => { gameState.player.x = x; gameState.player.y = y; });
+
+        if (gameState.depth < MAX_DEPTH) {
+            placeOnFloor((x, y) => gameState.map[y][x] = TILE_STAIRS);
+        } else {
+            placeOnFloor((x, y) => {
+                const boss = { ...bossData, x, y };
+                gameState.map[y][x] = TILE_BOSS;
+                gameState.monsters.push(boss);
+                addLog("最深部の空気が震えている...", 'log-boss');
+            });
+        }
+
+        const numMonsters = 4 + gameState.depth;
+        for (let i = 0; i < numMonsters; i++) {
+            if (gameState.depth === MAX_DEPTH && i === 0) continue;
+            placeOnFloor((x, y) => {
+                const type = monsterPool[Math.min(gameState.depth - 1, monsterPool.length - 1)];
+                gameState.monsters.push({ ...type, x, y });
+                gameState.map[y][x] = TILE_MONSTER;
+            });
+        }
+
+        placeOnFloor((x, y) => {
+            gameState.map[y][x] = TILE_POTION;
+            gameState.items.push({ x, y });
+        });
+
+        updateVision();
+        draw();
+    }
+
+    function placeOnFloor(callback) {
+        let x, y;
+        do {
+            x = Math.floor(Math.random() * WIDTH);
+            y = Math.floor(Math.random() * HEIGHT);
+        } while (gameState.map[y][x] !== TILE_FLOOR);
+        callback(x, y);
+    }
+
+    function generateMap() {
+        let map = [];
+        for (let y = 0; y < HEIGHT; y++) {
+            map[y] = [];
+            for (let x = 0; x < WIDTH; x++) {
+                if (x === 0 || x === WIDTH - 1 || y === 0 || y === HEIGHT - 1 || Math.random() < 0.15) {
+                    map[y][x] = TILE_WALL;
+                } else {
+                    map[y][x] = TILE_FLOOR;
+                }
+            }
+        }
+        return map;
+    }
+
+    function updateVision() {
+        for (let y = 0; y < HEIGHT; y++) {
+            for (let x = 0; x < WIDTH; x++) {
+                const d = Math.sqrt((x - gameState.player.x)**2 + (y - gameState.player.y)**2);
+                if (d <= VISION_RADIUS) gameState.explored[y][x] = true;
+            }
+        }
+    }
+
+    function draw() {
+        const screen = document.getElementById('screen');
+        let view = "";
+        const p = gameState.player;
+        let hud = `LEVEL:${p.lv}  HP:${p.hp}/${p.maxHp}  ATK:${p.atk}  EXP:${p.exp}/${p.nextExp}  FLOOR:${gameState.depth}F\n`;
+        
+        for (let y = 0; y < HEIGHT; y++) {
+            for (let x = 0; x < WIDTH; x++) {
+                const d = Math.sqrt((x - p.x)**2 + (y - p.y)**2);
+                const isVisible = d <= VISION_RADIUS;
+
+                if (x === p.x && y === p.y) {
+                    view += `<span style="color:#fff;">${TILE_PLAYER}</span>`;
+                } else if (isVisible) {
+                    let tile = gameState.map[y][x];
+                    if (tile === TILE_MONSTER || tile === TILE_BOSS) {
+                        const m = gameState.monsters.find(m => m.x === x && m.y === y);
+                        view += `<span style="color:${m.color};">${m.tile}</span>`;
+                    } else if (tile === TILE_WALL) view += `<span style="color:#444;">${TILE_WALL}</span>`;
+                    else if (tile === TILE_POTION) view += `<span style="color:#5f5;">${TILE_POTION}</span>`;
+                    else if (tile === TILE_STAIRS) view += `<span style="color:#ff5;">${TILE_STAIRS}</span>`;
+                    else view += `<span style="color:#222;">${TILE_FLOOR}</span>`;
+                } else if (gameState.explored[y][x]) {
+                    let tile = gameState.map[y][x];
+                    if (tile === TILE_WALL) view += `<span style="color:#1a1a1a;">${TILE_WALL}</span>`;
+                    else if (tile === TILE_STAIRS) view += `<span style="color:#440;">${TILE_STAIRS}</span>`;
+                    else view += `<span style="color:#0f0f0f;">${TILE_FLOOR}</span>`;
+                } else {
+                    view += TILE_UNKNOWN;
+                }
+            }
+            view += "\n";
+        }
+        screen.innerHTML = hud + "\n" + view;
+        drawLog();
+    }
+
+    function drawLog() {
+        const logDiv = document.getElementById('log');
+        logDiv.innerHTML = "";
+        gameState.log.slice(-4).forEach(e => {
+            const d = document.createElement('div');
+            d.className = `log-entry ${e.type}`;
+            d.textContent = e.text;
+            logDiv.appendChild(d);
+        });
+    }
+
+    function addLog(text, type = 'log-system') {
+        gameState.log.push({ text, type });
+        drawLog();
+    }
+
+    document.addEventListener('keydown', e => {
+        if (gameState.gameOver) return;
+        let dx = 0, dy = 0;
+        if (e.key === 'ArrowUp') dy = -1;
+        else if (e.key === 'ArrowDown') dy = 1;
+        else if (e.key === 'ArrowLeft') dx = -1;
+        else if (e.key === 'ArrowRight') dx = 1;
+        else if (e.key === ' ') {} 
+        else return;
+        e.preventDefault();
+        playerMove(dx, dy);
+    });
+
+    function playerMove(dx, dy) {
+        const nx = gameState.player.x + dx;
+        const ny = gameState.player.y + dy;
+        if (nx < 0 || nx >= WIDTH || ny < 0 || ny >= HEIGHT) return;
+
+        const tile = gameState.map[ny][nx];
+        if (tile === TILE_WALL) {
+            addLog("道が塞がれている。", 'log-system');
+        } else if (tile === TILE_MONSTER || tile === TILE_BOSS) {
+            const m = gameState.monsters.find(m => m.x === nx && m.y === ny);
+            if (m) {
+                const dmg = gameState.player.atk + Math.floor(Math.random() * 3);
+                m.hp -= dmg;
+                addLog(`${m.name}に ${dmg} の打撃を与えた！`, 'log-player');
+                if (m.hp <= 0) {
+                    addLog(`${m.name}を消し去った。`, 'log-system');
+                    gainExp(m.exp);
+                    gameState.map[m.y][m.x] = TILE_FLOOR;
+                    gameState.monsters = gameState.monsters.filter(mon => mon !== m);
+                    if (m.tile === TILE_BOSS) { endGame(true); return; }
+                }
+            }
+            monstersTurn();
+        } else {
+            gameState.player.x = nx;
+            gameState.player.y = ny;
+            if (tile === TILE_POTION) {
+                gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + 10);
+                addLog("ポーションを回収。傷が癒えた。", 'log-player');
+                gameState.map[ny][nx] = TILE_FLOOR;
+            } else if (tile === TILE_STAIRS) {
+                gameState.depth++;
+                addLog(`深層へ降りる... (${gameState.depth}F)`, 'log-system');
+                setupLevel();
+                return;
+            }
+            if(gameState.player.hp < gameState.player.maxHp && Math.random() < 0.2) gameState.player.hp++;
+            monstersTurn();
+        }
+        updateVision();
+        draw();
+    }
+
+    function gainExp(amt) {
+        gameState.player.exp += amt;
+        if (gameState.player.exp >= gameState.player.nextExp) {
+            const p = gameState.player;
+            p.lv++;
+            p.maxHp += 8; p.hp = p.maxHp;
+            p.atk += 3;
+            p.exp -= p.nextExp;
+            p.nextExp = Math.floor(p.nextExp * 1.6);
+            addLog(`レベルアップ！ 強さが身に染みる (Lv${p.lv})`, 'log-lvup');
+        }
+    }
+
+    function monstersTurn() {
+        gameState.monsters.forEach(m => {
+            const dx = gameState.player.x - m.x;
+            const dy = gameState.player.y - m.y;
+            const dist = Math.abs(dx) + Math.abs(dy);
+            if (dist === 1) {
+                const dmg = Math.max(1, m.atk - Math.floor(Math.random() * 2));
+                gameState.player.hp -= dmg;
+                addLog(`${m.name}の攻撃！ ${dmg} の傷を負った。`, 'log-enemy');
+                if (gameState.player.hp <= 0) endGame(false);
+            } else if (dist <= 5) {
+                let mx = m.x + (dx > 0 ? 1 : dx < 0 ? -1 : 0);
+                let my = m.y + (dy > 0 ? 1 : dy < 0 ? -1 : 0);
+                if (gameState.map[my][mx] === TILE_FLOOR) {
+                    gameState.map[m.y][m.x] = TILE_FLOOR;
+                    m.x = mx; m.y = my;
+                    gameState.map[my][mx] = (m.tile === TILE_BOSS ? TILE_BOSS : TILE_MONSTER);
+                }
+            }
+        });
+    }
+
+    function endGame(win) {
+        gameState.gameOver = true;
+        draw();
+        setTimeout(() => {
+            alert(win ? "守護者を倒し、迷宮の主となった！" : "力尽き、影に呑まれた...");
+            init();
+        }, 100);
+    }
+
+    init();
+</script>
+</body>
+</html>
