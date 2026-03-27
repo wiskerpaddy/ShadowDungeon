@@ -5,40 +5,40 @@
 ## 1. 起動方法
 保存した HTMLファイルをブラウザで開く だけで、すぐに冒険が始まります。
 ※モバイル端末でのタッチ操作、PCでのキーボード操作の両方に対応しています。
-![alt text](image/image.png)
+![alt text](READMEIMG/image.png)
 ## 2. 画面の構成
 ### 上部ステータスバー:
 - **Lv:** 現在のレベル。敵を倒すと上がり、HPと攻撃力が強化されます。
 - **HP:** 生命力。0になるとゲーム終了です。
 - **ATK:** 攻撃力。敵に与えるダメージの基本値です。
 - **FL:** 現在の階層。
-![alt text](image/image-1.png)
+![alt text](READMEIMG/image-1.png)
 - **中央（メイン画面）:**
 暗闇に包まれたダンジョンが表示されます。あなたの周囲数マス以外は、歩くことで視界が開けていきます。
-![alt text](image/image-2.png)
+![alt text](READMEIMG/image-2.png)
 - **下部ログ:**
 「攻撃した」「アイテムを拾った」などの行動結果がリアルタイムで表示されます。
-![alt text](image/image-3.png)
+![alt text](READMEIMG/image-3.png)
 - **矢印キー:**
 プレイヤーの移動を制御します。
 ## 3. 操作方法
 - **移動・攻撃:** 画面の 矢印ボタン または キーボードの矢印キー（WASD） を使用します。
 - **待機 (WAIT):** 敵を引きつけたい時や、その場でターンを消費したい時に使用します。
 - **ワープ (WARP):** 【今作の新要素】 HPを5消費して、フロア内のどこかへランダムに転送されます。囲まれた時の緊急脱出に有効です。
-![alt text](image/image-4.png)
+![alt text](READMEIMG/image-4.png)
 
 ## 4. 記号（エンティティ）の説明
 - 「@」 : 奏者（あなた）。
 - 「·」 : 床。移動可能なエリアです。
 - 「#」 : 壁。移動できません。
 - 「>」 : 階段。次のフロアへ進みます。
-![alt text](image/image-5.png)
+![alt text](READMEIMG/image-5.png)
 - 「L」: リード（回復）。拾うとHPが12回復します。
-![alt text](image/image-8.png)
+![alt text](READMEIMG/image-8.png)
 - 「r, A, e」 : モンスター。階層が深くなるほど不協和音が増し、強力な個体が登場します。
-![alt text](image/image-7.png)
+![alt text](READMEIMG/image-7.png)
 - 「Ω」 : 古の指揮者（ボス）。5Fで待ち構える最終試練です。
-![alt text](image/image-6.png)
+![alt text](READMEIMG/image-6.png)
 
 ## 5. ゲームの目的
 モンスターとの戦闘を切り抜け、レベルを上げながら地下深くを目指してください。第5階層（5F）に君臨するボス「Ω」を撃破すればゲームクリア、伝説の奏者となります。
@@ -70,8 +70,8 @@
 
 # ゲームサイクル・フロー図
 1ターンの処理の流れを可視化しました。
-![alt text](image/README_flowDiagram.png)
+![alt text](READMEIMG/README_flowDiagram.png)
 
 ### 状態遷移図（ゲーム開始から終了まで）
-![alt text](image/README_stateChageImage.png)
+![alt text](READMEIMG/README_stateChageImage.png)
 
