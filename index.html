@@ -8,6 +8,34 @@
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
+    <div id="game-container">
+        <div id="top-bar">
+            <div id="lang-selector">
+                <div class="lang-btn" id="btn-ja" onclick="setLang('ja')">JP</div>
+                <div class="lang-btn" id="btn-en" onclick="setLang('en')">EN</div>
+                <div class="lang-btn" id="btn-es" onclick="setLang('es')">ES</div>
+            </div>
+            <div class="help-circle" onclick="openGuide()">?</div>
+        </div>
+
+        <div id="guide-overlay" onclick="closeGuide()">
+            <div class="guide-title" id="g-title"></div>
+            <div class="guide-text" id="g-body"></div>
+            <div style="font-size:11px; color:#888;">Tap to Start / 画面をタップして開始</div>
+        </div>
+
+        <div id="screen"></div>
+        <div id="log"></div>
+        
+        <div id="controls">
+            <div class="btn" id="up" onclick="handleInput(0, -1)">↑</div>
+            <div class="btn" id="skill" onclick="useSkill()">WARP</div>
+            <div class="btn" id="left" onclick="handleInput(-1, 0)">←</div>
+            <div class="btn" id="wait" onclick="handleInput(0, 0)">WAIT</div>
+            <div class="btn" id="right" onclick="handleInput(1, 0)">→</div>
+            <div class="btn" id="down" onclick="handleInput(0, 1)">↓</div>
+        </div>
+    </div>
     <script src="config.js"></script>
     <script src="game.js"></script>
 </body>
