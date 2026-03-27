@@ -1,3 +1,5 @@
+let audioCtx = null; // 音声コンテキストを保持する変数
+
 // --- 2. ゲームの状態管理 (Game State) ---
 let curLang = 'en'; // デフォルトを英語にしておく
 let gameState = { 
@@ -52,49 +54,49 @@ function setLang(lang) {
  * @param {number} duration 鳴らす時間 (秒)
  */
 function playTone(freq, type, duration) {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
-    const osc = ctx.createOscillator();
-    const gain = ctx.createGain();
+    if (!audioCtx) return; // まだ初期化されていなければ無視
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
 
     osc.type = type;
-    osc.frequency.setValueAtTime(freq, ctx.currentTime);
+    osc.frequency.setValueAtTime(freq, audioCtx.currentTime);
     
-    // 音量制御（鳴り始めは大きく、最後はスッと消える）
-    gain.gain.setValueAtTime(0.1, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + duration);
+    gain.gain.setValueAtTime(0.1, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + duration);
 
     osc.connect(gain);
-    gain.connect(ctx.destination);
+    gain.connect(audioCtx.destination);
 
     osc.start();
-    osc.stop(ctx.currentTime + duration);
+    osc.stop(audioCtx.currentTime + duration);
 }
 
-/**
- * game.js
- * 改良版：音のレシピ（配列または単体）を受け取って再生する
- */
 function playEffect(data) {
-    const ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (!audioCtx) return;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
     
-    // 配列ならすべて鳴らす、単体なら配列化してループ
     const sounds = Array.isArray(data) ? data : [data];
 
     sounds.forEach(s => {
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
 
         osc.type = s.type;
-        osc.frequency.setValueAtTime(s.freq, ctx.currentTime);
+        osc.frequency.setValueAtTime(s.freq, audioCtx.currentTime);
         
-        gain.gain.setValueAtTime(s.gain, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + s.dur);
+        // 攻撃の「重み」を出すために、周波数を少しだけ急降下させる演出
+        osc.frequency.exponentialRampToValueAtTime(s.freq * 0.8, audioCtx.currentTime + s.dur);
+
+        gain.gain.setValueAtTime(s.gain || 0.1, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + s.dur);
 
         osc.connect(gain);
-        gain.connect(ctx.destination);
+        gain.connect(audioCtx.destination);
 
         osc.start();
-        osc.stop(ctx.currentTime + s.dur);
+        osc.stop(audioCtx.currentTime + s.dur);
     });
 }
 
@@ -421,6 +423,14 @@ function isGuideOpen() { return document.getElementById('guide-overlay').style.d
 function openGuide() { document.getElementById('guide-overlay').style.display = 'flex'; }
 function closeGuide() { 
     document.getElementById('guide-overlay').style.display = 'none';
+    // 【重要】ここで一度だけAudioContextを作成
+    
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    } else if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+    }
+
     if(!gameState.initialized){
         init();
     }
