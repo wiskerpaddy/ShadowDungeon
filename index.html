@@ -10,10 +10,11 @@
 <body>
     <div id="game-container">
         <div id="top-bar">
-            <div id="lang-selector">
-                <div class="lang-btn" id="btn-ja" onclick="setLang('ja')">JP</div>
-                <div class="lang-btn" id="btn-en" onclick="setLang('en')">EN</div>
-                <div class="lang-btn" id="btn-es" onclick="setLang('es')">ES</div>
+            <div class="lang-selector">
+                <button id="btn-ja" class="lang-btn" onclick="setLang('ja')">JP</button>
+                <button id="btn-en" class="lang-btn" onclick="setLang('en')">EN</button>
+                <button onclick="openGuide()" class="lang-btn">？</button>
+                <button id="mute-btn" class="lang-btn" onclick="toggleMute()">🔊</button>
             </div>
             <div class="help-circle" onclick="openGuide()">?</div>
         </div>

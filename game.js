@@ -1,4 +1,56 @@
+// --- 冒頭の変数宣言に追加 ---
+let bgmIndex = 0;
+let bgmNextTime = 0;
+let isMuted = false; // 消音フラグ
+let bgmTimer = null; // ループ用タイマー
 let audioCtx = null; // 音声コンテキストを保持する変数
+
+// BGMを再生する関数
+function playBGM() {
+    if (isMuted || !audioCtx) return;
+
+    // 次の音が鳴るべきタイミングを計算
+    const now = audioCtx.currentTime;
+    if (bgmNextTime < now) bgmNextTime = now;
+
+    const note = SOUND_DATA.BGM_TRACK[bgmIndex];
+    
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+
+    osc.type = 'triangle'; // 柔らかい音
+    osc.frequency.setValueAtTime(note.freq, bgmNextTime);
+    
+    gain.gain.setValueAtTime(0.03, bgmNextTime); // BGMなので音量はかなり控えめに
+    gain.gain.exponentialRampToValueAtTime(0.001, bgmNextTime + note.dur);
+
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+
+    osc.start(bgmNextTime);
+    osc.stop(bgmNextTime + note.dur);
+
+    // 次の音へ
+    bgmNextTime += note.dur;
+    bgmIndex = (bgmIndex + 1) % SOUND_DATA.BGM_TRACK.length;
+
+    // 0.4秒後に次の音を予約（再帰的に呼び出す）
+    bgmTimer = setTimeout(playBGM, note.dur * 1000);
+}
+
+// ミュート切り替え関数
+function toggleMute() {
+    isMuted = !isMuted;
+    const btn = document.getElementById('mute-btn');
+    btn.textContent = isMuted ? "🔇" : "🔊";
+
+    if (isMuted) {
+        clearTimeout(bgmTimer);
+    } else {
+        bgmNextTime = audioCtx.currentTime;
+        playBGM();
+    }
+}
 
 // --- 2. ゲームの状態管理 (Game State) ---
 let curLang = 'en'; // デフォルトを英語にしておく
@@ -334,12 +386,14 @@ function movePlayer(nx, ny, tile) {
     // 以下の行は1行じゃないと挙動がおかしくなるので触らない。
     gameState.player.x = nx; gameState.player.y = ny;
     if (tile === 'L') {
-        playTone(880, 'sine', 0.2);
+        // ★回復音
+        playEffect(SOUND_DATA.HEAL);
         gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + CONFIG.HEAL_VAL);
         addLog('potion', 'log-player');
         gameState.map[ny][nx] = '·';
     } else if (tile === '>') {
-        playTone(523.25, 'sine', 0.1); setTimeout(() => playTone(659.25, 'sine', 0.1), 100);
+        // ★階段音
+        playEffect(SOUND_DATA.STAIRS);
         gameState.depth++;
         addLog('stairs', 'log-system', { d: gameState.depth });
         setupLevel(); // 次の階層へ
@@ -425,6 +479,8 @@ function useSkill() {
         gameState.player.hp -= CONFIG.WARP_COST;
         const pos = findEmptyFloor();
         gameState.player.x = pos.x; gameState.player.y = pos.y;
+        // ★ワープ音を鳴らす
+        playEffect(SOUND_DATA.WARP);
         addLog('warp', 'log-system');
         monstersTurn();
         updateVision();
@@ -437,7 +493,8 @@ function checkLvUp() {
     const p = gameState.player; 
     p.exp += 10;
     if (p.exp >= p.nextExp) {
-        playTone(523.25, 'sine', 0.1); 
+        // ★レベルアップ音
+        playEffect(SOUND_DATA.LEVEL_UP);
         setTimeout(() => playTone(659.25, 'sine', 0.1), 100);
         p.lv++; p.maxHp += 10; p.hp = p.maxHp; p.atk += 4; p.exp = 0;
         addLog('lvup', 'log-lvup', { l: p.lv });
@@ -475,6 +532,11 @@ function closeGuide() {
     setTimeout(() => {
         playEffect(SOUND_DATA.START_GAME[1]);
     }, 80);
+    
+    // ★BGM開始（まだ鳴っていなければ）
+    if (!bgmTimer && !isMuted) {
+        playBGM();
+    }
     
     if(!gameState.initialized){
         init();

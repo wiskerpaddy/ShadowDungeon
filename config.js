@@ -104,11 +104,35 @@ const SOUND_DATA = {
             dur: 0.2, 
             gain: 0.1 }  // 「コーン！」
     ],
-    HEAL: { 
-        freq: 880, 
-        type: 'sine', 
-        dur: 0.2, 
-        gain: 0.1 
-    }
-
+    // ワープ：音が上昇していく不思議な感じ
+    WARP: [
+        { freq: 440, type: 'square', dur: 0.05, gain: 0.1 },
+        { freq: 660, type: 'square', dur: 0.05, gain: 0.1 },
+        { freq: 880, type: 'square', dur: 0.1, gain: 0.1 }
+    ],
+    // 回復：柔らかい高音
+    HEAL: { freq: 1200, type: 'sine', dur: 0.2, gain: 0.08 },
+    
+    // レベルアップ：明るい和音のファンファーレ
+    LEVEL_UP: [
+        { freq: 523, type: 'square', dur: 0.1, gain: 0.05 }, // ド
+        { freq: 659, type: 'square', dur: 0.1, gain: 0.05 }, // ミ
+        { freq: 784, type: 'square', dur: 0.3, gain: 0.5 }  // ソ
+    ],
+    
+    // 階段：一段ずつ上がるような音
+    STAIRS: [
+        { freq: 150, type: 'triangle', dur: 0.1, gain: 0.1 },
+        { freq: 200, type: 'triangle', dur: 0.1, gain: 0.1 }
+    ],
+    BGM_TRACK: [
+        { freq: 293.66, dur: 0.8 }, // レ (D)
+        { freq: 220.00, dur: 0.8 }, // ラ (A)
+        { freq: 246.94, dur: 0.8 }, // シ (Bm)
+        { freq: 185.00, dur: 0.8 }, // ファ# (F#m)
+        { freq: 196.00, dur: 0.8 }, // ソ (G)
+        { freq: 146.83, dur: 0.8 }, // レ (D)
+        { freq: 196.00, dur: 0.8 }, // ソ (G)
+        { freq: 220.00, dur: 0.8 }  // ラ (A)
+        ]
 };
