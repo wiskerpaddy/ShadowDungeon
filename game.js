@@ -7,22 +7,43 @@ let audioCtx = null;
 
 function playBGM() {
     if (isMuted || !audioCtx) return;
+
     const now = audioCtx.currentTime;
     if (bgmNextTime < now) bgmNextTime = now;
-    const note = SOUND_DATA.BGM_TRACK[bgmIndex];
+
+    // --- 階層による曲の切り替え ---
+    // 現在の階が最大階層(MAX_DEPTH)ならボス曲、それ以外なら通常曲を選択
+    const isBossFloor = (gameState.depth === CONFIG.MAX_DEPTH);
+    const track = isBossFloor ? SOUND_DATA.BGM_BOSS : SOUND_DATA.BGM_TRACK;
+    
+    // インデックスが配列外にならないよう調整
+    const note = track[bgmIndex % track.length];
+    
+    // ボス戦中（ボスがまだ生きている）なら、さらにテンポを速く、音を激しくする
+    const isBossAlive = gameState.monsters.some(m => m.isBoss);
+    const currentDur = isBossAlive ? note.dur / 2 : note.dur;
+    const currentType = isBossAlive ? 'sawtooth' : 'triangle';
+
     const osc = audioCtx.createOscillator();
     const gain = audioCtx.createGain();
-    osc.type = 'triangle';
+
+    osc.type = currentType; 
     osc.frequency.setValueAtTime(note.freq, bgmNextTime);
+    
     gain.gain.setValueAtTime(0.03, bgmNextTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, bgmNextTime + note.dur);
+    gain.gain.exponentialRampToValueAtTime(0.001, bgmNextTime + currentDur);
+
     osc.connect(gain);
     gain.connect(audioCtx.destination);
+
     osc.start(bgmNextTime);
-    osc.stop(bgmNextTime + note.dur);
-    bgmNextTime += note.dur;
-    bgmIndex = (bgmIndex + 1) % SOUND_DATA.BGM_TRACK.length;
-    bgmTimer = setTimeout(playBGM, note.dur * 1000);
+    osc.stop(bgmNextTime + currentDur);
+
+    bgmNextTime += currentDur;
+    // track.length を使うことで、曲の長さに合わせてループ
+    bgmIndex = (bgmIndex + 1) % track.length;
+
+    bgmTimer = setTimeout(playBGM, currentDur * 1000);
 }
 
 function toggleMute() {
