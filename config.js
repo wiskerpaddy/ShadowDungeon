@@ -144,11 +144,12 @@ const SOUND_DATA = {
         { freq: 1046, type: 'triangle', dur: 0.4, gain: 0.015 } // 「カーン…」(高音で綺麗に消える)
     ],
     
-    // ワープ：音が上昇していく不思議な感じ
+    // ワープ：空間がねじれるような、滑らかな上昇音
     WARP: [
-        { freq: 440, type: 'square', dur: 0.2, gain: 0.1 },
-        { freq: 660, type: 'square', dur: 0.2, gain: 0.1 },
-        { freq: 880, type: 'square', dur: 0.4, gain: 0.1 }
+        { freq: 440, type: 'triangle', dur: 0.1, gain: 0.03 }, // ラ
+        { freq: 660, type: 'triangle', dur: 0.1, gain: 0.03 }, // ミ
+        { freq: 880, type: 'triangle', dur: 0.1, gain: 0.02 }, // 高いラ
+        { freq: 1320, type: 'sine',     dur: 0.4, gain: 0.01 }  // 非常に高いミ（サイン波で柔らかく締める）
     ],
 
     // 回復：柔らかい高音
