@@ -7,8 +7,31 @@ const CONFIG = {
     MAP_H: 15,      // マップの縦幅
     MAX_DEPTH: 5,   // ボスが登場する階層
     WARP_COST: 5,   // ワープスキル使用時のHP消費量
-    HEAL_VAL: 12    // 回復アイテム(L)の回復量
+    HEAL_VAL: 12,    // 回復アイテム(L)の回復量
+
+// タイルやエンティティの記号定義
+    TILES: {
+        PLAYER: '@',
+        MONSTER_GENERIC: 'E', // マップ上の敵データとしての管理用
+        BOSS: 'Ω',
+        WALL: '#',
+        FLOOR: '·',
+        STAIRS: '>',
+        POTION: 'L'
+    },
+
+    APPEARANCE: {
+        // 先ほどの色の設定もここに紐付ける
+        PLAYER: { color: '#fff' },
+        WALL: { color: '#444' },
+        FLOOR: { color: '#222' },
+        POTION: { color: '#5f5' },
+        STAIRS: { color: '#ff5' },
+        MONSTER: { color: '#aaa' },
+        BOSS: { color: '#f0f' }
+    }
 };
+
 
 /**
  * 2. 多言語定義 (i18n)

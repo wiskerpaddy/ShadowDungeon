@@ -244,7 +244,7 @@ function setupLevel() {
                 x: mPos.x, y: mPos.y 
             }
         );
-        gameState.map[mPos.y][mPos.x] = 'E';
+        gameState.map[mPos.y][mPos.x] = CONFIG.TILES.MONSTER_GENERIC;
     }
 
     // 回復アイテム(L)を配置
@@ -260,33 +260,99 @@ function setupLevel() {
  */
 
 // function: 指定座標のタイル表示情報を決定する
+/**
+ * 6. レンダリング (描画系)
+ */
 function getTileDisplay(x, y, isVisible) {
     const p = gameState.player;
+    const APP = CONFIG.APPEARANCE;
+    const TILE = CONFIG.TILES;
     
-    // プレイヤー自身
+    // 1. プレイヤー自身
     if (x === p.x && y === p.y){
-        return { c: '@', color: '#fff' };
+        return { c: TILE.PLAYER, color: APP.PLAYER.color };
     }
     
-    // 視界外の処理 (フォグ・オブ・ウォー)
+    // 2. 視界外の処理
     if (!isVisible) {
         if (gameState.explored[y][x]) {
             const t = gameState.map[y][x];
-            // 探索済みだが今は見えない場合は、敵やアイテムを隠して地形のみ表示
-            return { c: (t==='E'||t==='Ω'||t==='L') ? '·' : t, color: '#111' };
+            // 敵やアイテムは隠して表示
+            const isEntity = (t === TILE.MONSTER_GENERIC || t === TILE.BOSS || t === TILE.POTION);
+            return { c: isEntity ? TILE.FLOOR : t, color: APP.EXPLORED_SHADOW.color };
         }
-        return { c: ' ', color: '#000' };
+        return { c: ' ', color: APP.UNEXPLORED.color };
     }
 
-    // 視界内の処理
+    // 3. 視界内の処理
     const tile = gameState.map[y][x];
-    if (tile === 'E' || tile === 'Ω') {
+
+    // モンスター・ボスの表示
+    if (tile === TILE.MONSTER_GENERIC || tile === TILE.BOSS) {
         const m = gameState.monsters.find(m => m.x === x && m.y === y);
-        return { c: m ? m.tile : 'E', color: m ? m.color : '#aaa' };
+        return { c: m ? m.tile : tile, color: m ? m.color : (tile === TILE.BOSS ? APP.BOSS.color : APP.MONSTER.color) };
     }
     
-    const colors = { '#': '#444', 'L': '#5f5', '>': '#ff5', '·': '#222' };
-    return { c: tile, color: colors[tile] || '#222' };
+    // その他のタイルの色
+    const tileColors = { 
+        [TILE.WALL]: APP.WALL.color, 
+        [TILE.POTION]: APP.POTION.color, 
+        [TILE.STAIRS]: APP.STAIRS.color, 
+        [TILE.FLOOR]: APP.FLOOR.color 
+    };
+    
+    return { c: tile, color: tileColors[tile] || APP.FLOOR.color };
+}
+
+/**
+ * モンスターがプレイヤーに近づくように移動する
+ * @param {Object} m - モンスターオブジェクト
+ */
+function moveMonsterRandomly(m) {
+    // 1. プレイヤーとの距離（差）を計算
+    const dx = gameState.player.x - m.x;
+    const dy = gameState.player.y - m.y;
+
+    // 2. X軸とY軸、どちらに動くべきか決める（距離が遠い方を優先）
+    let moveX = 0;
+    let moveY = 0;
+
+    if (Math.abs(dx) > Math.abs(dy)) {
+        moveX = dx > 0 ? 1 : -1;
+    } else {
+        moveY = dy > 0 ? 1 : -1;
+    }
+
+    const tx = m.x + moveX;
+    const ty = m.y + moveY;
+
+    // 3. 移動先が床であり、プレイヤーがいないかチェック
+    const isPlayerPos = (tx === gameState.player.x && ty === gameState.player.y);
+    const isFloor = (gameState.map[ty][tx] === CONFIG.TILES.FLOOR);
+    
+    if (isFloor && !isPlayerPos) {
+        // 元いた場所を床に戻し、新しい場所に記号を配置
+        gameState.map[m.y][m.x] = CONFIG.TILES.FLOOR;
+        m.x = tx; 
+        m.y = ty;
+        gameState.map[m.y][m.x] = m.isBoss ? CONFIG.TILES.BOSS : CONFIG.TILES.MONSTER_GENERIC;
+    } else {
+        // もし行きたい方向に壁やプレイヤーがあったら、もう一方の軸（代替ルート）を試す
+        let altX = moveX === 0 ? (dx > 0 ? 1 : -1) : 0;
+        let altY = moveY === 0 ? (dy > 0 ? 1 : -1) : 0;
+        const ax = m.x + altX;
+        const ay = m.y + altY;
+        
+        const isAltPlayerPos = (ax === gameState.player.x && ay === gameState.player.y);
+        const isAltFloor = (gameState.map[ay][ax] === CONFIG.TILES.FLOOR);
+
+        if (isAltFloor && !isAltPlayerPos) {
+            gameState.map[m.y][m.x] = CONFIG.TILES.FLOOR;
+            m.x = ax; 
+            m.y = ay;
+            gameState.map[m.y][m.x] = m.isBoss ? CONFIG.TILES.BOSS : CONFIG.TILES.MONSTER_GENERIC;
+        }
+    }
 }
 
 // function: 画面全体の書き換え
@@ -347,12 +413,11 @@ function handleInput(dx, dy) {
     const nx = gameState.player.x + dx, ny = gameState.player.y + dy;
     const tile = gameState.map[ny][nx];
 
-    if (tile === '#') {
-        // ★壁にぶつかる音
+    // CONFIGの値を参照して判定
+    if (tile === CONFIG.TILES.WALL) {
         playEffect(SOUND_DATA.DUDGE_WALL);
-        addLog('wall', 'log-system'); // 壁
-    } else if (tile === 'E' || tile === 'Ω') {
-        combat(nx, ny); // 戦闘
+    } else if (tile === CONFIG.TILES.MONSTER_GENERIC || tile === CONFIG.TILES.BOSS) {
+        combat(nx, ny);
     } else {
         movePlayer(nx, ny, tile); // 移動
     }
