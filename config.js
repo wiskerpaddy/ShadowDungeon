@@ -59,62 +59,45 @@ const i18n = {
  */
 
 const SOUND_DATA = {
-    MOVE: { 
-        // freq: 220, 
-        // type: 'sine', 
-        // dur: 0.03, 
-        // gain: 0.02 
-    }, // 低めで短く、音量も極小
-    PLAYER_ATTACK: { 
-        // freq: 440, 
-        // type: 'sawtooth', 
-        // dur: 0.1, gain: 
-        // 0.05 
-    },
-    ENEMY_ATTACK:  {
-         freq: 150, 
-         type: 'triangle', 
-         dur: 0.2, 
-         gain: 0.1 
-    },
+    // プレイヤーの移動
+    MOVE: { freq: 220, type: 'sine', dur: 0.03, gain: 0.02 }, // 低めで短く、音量も極小
+    
+    // プレイヤーの攻撃
+    PLAYER_ATTACK: { freq: 440, type: 'sawtooth', dur: 0.1, gain: 0.05 },
+    
+    // 敵の攻撃
+    ENEMY_ATTACK:  {freq: 150, type: 'triangle', dur: 0.2, gain: 0.1 },
+    
+    // 壁にぶつかる
+    DUDGE_WALL: { freq: 440, type: 'sine', dur: 0.05, gain: 0.02 }, // 低めで短く、音量も極小
+
     // ボスの攻撃：低音のうなり
     BOSS_ATTACK: [
-        { 
-            freq: 60, 
-            type: 'sawtooth', 
-            dur: 0.5, 
-            gain: 0.2 
-        }, // 地響きのような低音
-        { 
-            freq: 66, 
-            type: 'sawtooth', 
-            dur: 0.5, 
-            gain: 0.2 
-        }  // わずかにずらした音で「うねり」を作る
+        { freq: 60, type: 'sawtooth', dur: 0.5, gain: 0.2 }, // 地響きのような低音
+        { freq: 66, type: 'sawtooth', dur: 0.5, gain: 0.2 }  // わずかにずらした音で「うねり」を作る
     ],
+
+    // ゲーム開始：ピコーン
     START_GAME: [
-        { 
-            freq: 660, 
-            type: 'sine', 
-            dur: 0.1, 
-            gain: 0.1 }, // 「ピ」
-        { 
-            freq: 880, 
-            type: 'sine', 
-            dur: 0.2, 
-            gain: 0.1 }  // 「コーン！」
+        { freq: 660, type: 'sine', dur: 0.1, gain: 0.1 }, // 「ピ」
+        { freq: 880, type: 'sine', dur: 0.2, gain: 0.1 }  // 「コーン！」
     ],
+    
     // ワープ：音が上昇していく不思議な感じ
     WARP: [
         { freq: 440, type: 'square', dur: 0.05, gain: 0.1 },
         { freq: 660, type: 'square', dur: 0.05, gain: 0.1 },
         { freq: 880, type: 'square', dur: 0.1, gain: 0.1 }
     ],
+
     // 回復：柔らかい高音
-    HEAL: { freq: 1200, type: 'sine', dur: 0.2, gain: 0.08 },
+    HEAL: { freq: 1200, type: 'square', dur: 0.2, gain: 0.08 },
     
     // レベルアップ：明るい和音のファンファーレ
     LEVEL_UP: [
+        { freq: 523, type: 'square', dur: 0.1, gain: 0.05 }, // ド
+        { freq: 659, type: 'square', dur: 0.1, gain: 0.05 }, // ミ
+        { freq: 784, type: 'square', dur: 0.3, gain: 0.5 },  // ソ
         { freq: 523, type: 'square', dur: 0.1, gain: 0.05 }, // ド
         { freq: 659, type: 'square', dur: 0.1, gain: 0.05 }, // ミ
         { freq: 784, type: 'square', dur: 0.3, gain: 0.5 }  // ソ
@@ -125,6 +108,13 @@ const SOUND_DATA = {
         { freq: 150, type: 'triangle', dur: 0.1, gain: 0.1 },
         { freq: 200, type: 'triangle', dur: 0.1, gain: 0.1 }
     ],
+    
+    // 敵撃破：気持ちいい音
+    DEFEATED: [
+        { freq: 523, type: 'square', dur: 0.1, gain: 0.05 }, // ド
+        { freq: 659, type: 'square', dur: 0.1, gain: 0.05 }, // ミ
+        { freq: 784, type: 'square', dur: 0.3, gain: 0.5 }  // ソ
+    ],
     BGM_TRACK: [
         { freq: 293.66, dur: 0.8 }, // レ (D)
         { freq: 220.00, dur: 0.8 }, // ラ (A)
@@ -134,5 +124,5 @@ const SOUND_DATA = {
         { freq: 146.83, dur: 0.8 }, // レ (D)
         { freq: 196.00, dur: 0.8 }, // ソ (G)
         { freq: 220.00, dur: 0.8 }  // ラ (A)
-        ]
+    ]
 };

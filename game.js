@@ -348,7 +348,8 @@ function handleInput(dx, dy) {
     const tile = gameState.map[ny][nx];
 
     if (tile === '#') {
-        playTone(440, 'sine', 0.05); // 「ポッ」という短い音
+        // ★壁にぶつかる音
+        playEffect(SOUND_DATA.DUDGE_WALL);
         addLog('wall', 'log-system'); // 壁
     } else if (tile === 'E' || tile === 'Ω') {
         combat(nx, ny); // 戦闘
@@ -366,13 +367,14 @@ function handleInput(dx, dy) {
 
 // function: 戦闘処理
 function combat(nx, ny) {
-    playTone(150, 'sawtooth', 0.2); // 「ザシュッ」という感じの音
+    playEffect(SOUND_DATA.PLAYER_ATTACK);// 「ザシュッ」という感じの音
     const m = gameState.monsters.find(m => m.x === nx && m.y === ny);
     const dmg = gameState.player.atk + Math.floor(Math.random()*5);
     m.hp -= dmg;
     addLog('attack', 'log-player', { nIsMonster: true, monsterObj: m, dmg: dmg });
 
     if (m.hp <= 0) {
+        playEffect(SOUND_DATA.DEFEATED);
         addLog('defeat', 'log-system', { nIsMonster: true, monsterObj: m });
         gameState.map[ny][nx] = '·';
         gameState.monsters = gameState.monsters.filter(mon => mon !== m);
@@ -397,6 +399,9 @@ function movePlayer(nx, ny, tile) {
         gameState.depth++;
         addLog('stairs', 'log-system', { d: gameState.depth });
         setupLevel(); // 次の階層へ
+    }else{
+        // ★何もない場所を移動する音
+        playEffect(SOUND_DATA.MOVE);
     }
 }
 
@@ -512,9 +517,23 @@ function updateVision() {
 /**
  * 8. ユーティリティ・UI制御
  */
-function addLog(key, type, params = {}) { gameState.log.push({ key, type, params }); }
-function isGuideOpen() { return document.getElementById('guide-overlay').style.display === 'flex'; }
-function openGuide() { document.getElementById('guide-overlay').style.display = 'flex'; }
+function addLog(key, type, params = {}) {
+     gameState.log.push({ key, type, params }); 
+}
+
+function isGuideOpen() { 
+    return document.getElementById('guide-overlay').style.display === 'flex'; 
+}
+
+function openGuide() { 
+    document.getElementById('guide-overlay').style.display = 'flex';
+    // BGMを一時停止
+    if (bgmTimer) {
+        clearTimeout(bgmTimer);
+        bgmTimer = null;
+    }
+}
+
 function closeGuide() { 
     const overlay = document.getElementById('guide-overlay');
     overlay.style.display = 'none';
