@@ -138,10 +138,10 @@ const SOUND_DATA = {
 
     // ゲーム開始：ピコーン
     START_GAME: [
-        { freq: 660, type: 'square', dur: 0.1, gain: 0.1 }, // 「ピ」
-        { freq: 880, type: 'square', dur: 0.2, gain: 0.1 },  // 「コーン！」
-        { freq: 660, type: 'square', dur: 0.1, gain: 0.1 }, // 「ピ」
-        { freq: 880, type: 'square', dur: 0.2, gain: 0.1 }  // 「コーン！」
+        { freq: 660, type: 'triangle', dur: 0.1, gain: 0.04 }, // 「ピ」
+        { freq: 880, type: 'triangle', dur: 0.3, gain: 0.03 }, // 「コーン！」
+        { freq: 784, type: 'triangle', dur: 0.1, gain: 0.02 }, // 「ピ」(少し変化をつけて軽やかに)
+        { freq: 1046, type: 'triangle', dur: 0.4, gain: 0.015 } // 「カーン…」(高音で綺麗に消える)
     ],
     
     // ワープ：音が上昇していく不思議な感じ
@@ -156,12 +156,12 @@ const SOUND_DATA = {
     
     // レベルアップ：明るい和音のファンファーレ
     LEVEL_UP: [
-        { freq: 523, type: 'square', dur: 0.1, gain: 0.05 }, // ド
-        { freq: 659, type: 'square', dur: 0.1, gain: 0.05 }, // ミ
-        { freq: 784, type: 'square', dur: 0.3, gain: 0.5 },  // ソ
-        { freq: 523, type: 'square', dur: 0.1, gain: 0.05 }, // ド
-        { freq: 659, type: 'square', dur: 0.1, gain: 0.05 }, // ミ
-        { freq: 784, type: 'square', dur: 0.3, gain: 0.5 }  // ソ
+        { freq: 523, type: 'triangle', dur: 0.1, gain: 0.04 }, // ド
+        { freq: 659, type: 'triangle', dur: 0.1, gain: 0.04 }, // ミ
+        { freq: 784, type: 'triangle', dur: 0.2, gain: 0.03 }, // ソ
+        { freq: 523, type: 'triangle', dur: 0.1, gain: 0.02 }, // ド (高音への余韻)
+        { freq: 659, type: 'triangle', dur: 0.1, gain: 0.015 }, // ミ
+        { freq: 1046, type: 'triangle', dur: 0.4, gain: 0.01 }  // 高いド (最後は消え入るように)
     ],
     
     // 階段：一段ずつ上がるような音
@@ -176,9 +176,9 @@ const SOUND_DATA = {
     
     // 敵撃破：気持ちいい音
     DEFEATED: [
-        { freq: 523, type: 'square', dur: 0.1, gain: 0.05 }, // ド
-        { freq: 659, type: 'square', dur: 0.1, gain: 0.05 }, // ミ
-        { freq: 784, type: 'square', dur: 0.3, gain: 0.5 }  // ソ
+        { freq: 146, type: 'sawtooth', dur: 0.1, gain: 0.03 }, // 少しザラついた音で手応えを出す
+        { freq: 110, type: 'triangle', dur: 0.15, gain: 0.02 }, // 後半は柔らかい音へ
+        { freq: 73,  type: 'triangle', dur: 0.2, gain: 0.01 }  // スッと消える
     ],
     BGM_TRACK: [
         { freq: 293.66, dur: 0.8 }, // レ (D)
