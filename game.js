@@ -152,6 +152,8 @@ function playEffect(data) {
     });
 }
 
+// --- 冒頭の変数宣言、BGM、言語、playEffect等の関数は変更なしのため省略 ---
+
 // function: ゲームの初期セットアップ
 function init() {
     gameState.player = { 
@@ -170,7 +172,7 @@ function init() {
     gameState.gameOver = false;
     
     addLog('start', 'log-system');
-    setupLevel(); // 最初のフロアを生成
+    setupLevel(); 
     gameState.initialized = true;
 }
 
@@ -178,26 +180,28 @@ function init() {
  * 5. マップ生成・座標ロジック
  */
 
-// function: 何もない床(·)の座標をランダムに取得する
+// function: 何もない床の座標をランダムに取得する
 function findEmptyFloor() {
     let x, y;
     do {
         x = Math.floor(Math.random() * CONFIG.MAP_W);
         y = Math.floor(Math.random() * CONFIG.MAP_H);
-    } while (gameState.map[y][x] !== '·');
+    } while (gameState.map[y][x] !== CONFIG.TILES.FLOOR); // CONFIGを参照
     return { x, y };
 }
 
 // function: フロアの地形とオブジェクトの配置
 function setupLevel() {
+    const TILE = CONFIG.TILES;
+    
     // マップを壁で埋めてから、ランダムに床を掘る
     gameState.map = Array.from(
-        {length: CONFIG.MAP_H }, () => Array(CONFIG.MAP_W).fill('#')
+        {length: CONFIG.MAP_H }, () => Array(CONFIG.MAP_W).fill(TILE.WALL)
     );
     for (let y = 1; y < CONFIG.MAP_H - 1; y++) {
         for (let x = 1; x < CONFIG.MAP_W - 1; x++) {
             if (Math.random() > 0.18){
-                gameState.map[y][x] = '·';
+                gameState.map[y][x] = TILE.FLOOR; // CONFIGを参照
             }
         }
     }
@@ -210,23 +214,23 @@ function setupLevel() {
     const pPos = findEmptyFloor();
     gameState.player.x = pPos.x; gameState.player.y = pPos.y;
 
-    // 階段(>) または ボス(Ω) の配置
+    // 階段 または ボスの配置
     const exitPos = findEmptyFloor();
     if (gameState.depth < CONFIG.MAX_DEPTH) {
-        gameState.map[exitPos.y][exitPos.x] = '>';
+        gameState.map[exitPos.y][exitPos.x] = TILE.STAIRS; // CONFIGを参照
     } else {
         gameState.monsters.push(
             { 
                 isBoss: true, 
-                tile: 'Ω', 
+                tile: TILE.BOSS, 
                 hp: 80, 
                 atk: 15, 
-                color: '#f0f', 
+                color: CONFIG.APPEARANCE.BOSS.color, 
                 x: exitPos.x, 
                 y: exitPos.y 
             }
         );
-        gameState.map[exitPos.y][exitPos.x] = 'Ω';
+        gameState.map[exitPos.y][exitPos.x] = TILE.BOSS;
         addLog('bossNear', 'log-boss');
     }
 
@@ -237,29 +241,24 @@ function setupLevel() {
         gameState.monsters.push(
             { 
                 typeIndex: typeIdx, 
-                tile: ['r','A','e'][typeIdx], 
+                tile: ['r','A','e'][typeIdx], // 見た目としての記号
                 hp: 10 * gameState.depth, 
                 atk: 3 * gameState.depth, 
-                color: '#aaa', 
+                color: CONFIG.APPEARANCE.MONSTER.color, 
                 x: mPos.x, y: mPos.y 
             }
         );
-        gameState.map[mPos.y][mPos.x] = CONFIG.TILES.MONSTER_GENERIC;
+        gameState.map[mPos.y][mPos.x] = TILE.MONSTER_GENERIC;
     }
 
-    // 回復アイテム(L)を配置
+    // 回復アイテムを配置
     const itemPos = findEmptyFloor();
-    gameState.map[itemPos.y][itemPos.x] = 'L';
+    gameState.map[itemPos.y][itemPos.x] = TILE.POTION; // CONFIGを参照
 
     updateVision();
     draw();
 }
 
-/**
- * 6. レンダリング (描画系)
- */
-
-// function: 指定座標のタイル表示情報を決定する
 /**
  * 6. レンダリング (描画系)
  */
@@ -277,7 +276,7 @@ function getTileDisplay(x, y, isVisible) {
     if (!isVisible) {
         if (gameState.explored[y][x]) {
             const t = gameState.map[y][x];
-            // 敵やアイテムは隠して表示
+            // 敵やアイテムは隠して床として表示
             const isEntity = (t === TILE.MONSTER_GENERIC || t === TILE.BOSS || t === TILE.POTION);
             return { c: isEntity ? TILE.FLOOR : t, color: APP.EXPLORED_SHADOW.color };
         }
@@ -305,134 +304,64 @@ function getTileDisplay(x, y, isVisible) {
 }
 
 /**
- * モンスターがプレイヤーに近づくように移動する
- * @param {Object} m - モンスターオブジェクト
+ * モンスターの移動ロジック
  */
 function moveMonsterRandomly(m) {
-    // 1. プレイヤーとの距離（差）を計算
+    const TILE = CONFIG.TILES;
     const dx = gameState.player.x - m.x;
     const dy = gameState.player.y - m.y;
 
-    // 2. X軸とY軸、どちらに動くべきか決める（距離が遠い方を優先）
-    let moveX = 0;
-    let moveY = 0;
-
+    let moveX = 0; let moveY = 0;
     if (Math.abs(dx) > Math.abs(dy)) {
         moveX = dx > 0 ? 1 : -1;
     } else {
         moveY = dy > 0 ? 1 : -1;
     }
 
-    const tx = m.x + moveX;
-    const ty = m.y + moveY;
-
-    // 3. 移動先が床であり、プレイヤーがいないかチェック
+    const tx = m.x + moveX; const ty = m.y + moveY;
     const isPlayerPos = (tx === gameState.player.x && ty === gameState.player.y);
-    const isFloor = (gameState.map[ty][tx] === CONFIG.TILES.FLOOR);
     
-    if (isFloor && !isPlayerPos) {
-        // 元いた場所を床に戻し、新しい場所に記号を配置
-        gameState.map[m.y][m.x] = CONFIG.TILES.FLOOR;
-        m.x = tx; 
-        m.y = ty;
-        gameState.map[m.y][m.x] = m.isBoss ? CONFIG.TILES.BOSS : CONFIG.TILES.MONSTER_GENERIC;
+    // 移動先が床（TILE.FLOOR）であることを確認
+    if (gameState.map[ty][tx] === TILE.FLOOR && !isPlayerPos) {
+        gameState.map[m.y][m.x] = TILE.FLOOR;
+        m.x = tx; m.y = ty;
+        gameState.map[m.y][m.x] = m.isBoss ? TILE.BOSS : TILE.MONSTER_GENERIC;
     } else {
-        // もし行きたい方向に壁やプレイヤーがあったら、もう一方の軸（代替ルート）を試す
         let altX = moveX === 0 ? (dx > 0 ? 1 : -1) : 0;
         let altY = moveY === 0 ? (dy > 0 ? 1 : -1) : 0;
-        const ax = m.x + altX;
-        const ay = m.y + altY;
+        const ax = m.x + altX; const ay = m.y + altY;
         
-        const isAltPlayerPos = (ax === gameState.player.x && ay === gameState.player.y);
-        const isAltFloor = (gameState.map[ay][ax] === CONFIG.TILES.FLOOR);
-
-        if (isAltFloor && !isAltPlayerPos) {
-            gameState.map[m.y][m.x] = CONFIG.TILES.FLOOR;
-            m.x = ax; 
-            m.y = ay;
-            gameState.map[m.y][m.x] = m.isBoss ? CONFIG.TILES.BOSS : CONFIG.TILES.MONSTER_GENERIC;
+        if (gameState.map[ay][ax] === TILE.FLOOR && !(ax === gameState.player.x && ay === gameState.player.y)) {
+            gameState.map[m.y][m.x] = TILE.FLOOR;
+            m.x = ax; m.y = ay;
+            gameState.map[m.y][m.x] = m.isBoss ? TILE.BOSS : TILE.MONSTER_GENERIC;
         }
     }
 }
 
-// function: 画面全体の書き換え
-function draw() {
-    const screen = document.getElementById('screen');
-    const T = i18n[curLang];
-    const p = gameState.player;
+// プレイヤーの移動処理内の記号も修正
+function movePlayer(nx, ny, tile) {
+    const TILE = CONFIG.TILES;
+    gameState.player.x = nx; gameState.player.y = ny;
     
-    // ステータス表示(HUD)
-    let hud = `Lv:${p.lv}  ${T.hp}:${p.hp}/${p.maxHp}  ${T.atk}:${p.atk}  ${T.floor}:${gameState.depth}\n`;
-    let view = "";
-
-    // マップを1セルずつ構築
-    for (let y = 0; y < CONFIG.MAP_H; y++) {
-        for (let x = 0; x < CONFIG.MAP_W; x++) {
-            // 三平方の定理で視界内判定
-            const isVisible = Math.sqrt((x - p.x)**2 + (y - p.y)**2) <= p.vision;
-            const info = getTileDisplay(x, y, isVisible);
-            view += `<span style="color:${info.color};">${info.c}</span>`;
-        }
-        view += "\n";
-    }
-    screen.innerHTML = hud + "\n" + view;
-    updateLogUI(T);
-}
-
-// function: ログメッセージの更新
-function updateLogUI(T) {
-    const logDiv = document.getElementById('log');
-    logDiv.innerHTML = "";
-    gameState.log.slice(-4).forEach(entry => {
-        let msg = T[entry.key] || entry.key;
-        // モンスター名の置換
-        if (entry.params.nIsMonster) {
-            const m = entry.params.monsterObj;
-            msg = msg.replace(`{n}`, m.isBoss ? T.bName : T.mNames[m.typeIndex]);
-        }
-        // その他のパラメータ({dmg}など)の置換
-        Object.keys(entry.params).forEach(k => msg = msg.replace(`{${k}}`, entry.params[k]));
-        
-        const d = document.createElement('div');
-        d.className = entry.type; 
-        d.textContent = msg;
-        logDiv.appendChild(d);
-    });
-}
-
-/**
- * 7. ゲームアクション (移動・戦闘など)
- */
-
-// function: プレイヤーの入力処理
-function handleInput(dx, dy) {
-    if (gameState.gameOver || isGuideOpen()){
-        return;
-    }
-
-    const nx = gameState.player.x + dx, ny = gameState.player.y + dy;
-    const tile = gameState.map[ny][nx];
-
-    // CONFIGの値を参照して判定
-    if (tile === CONFIG.TILES.WALL) {
-        playEffect(SOUND_DATA.DUDGE_WALL);
-    } else if (tile === CONFIG.TILES.MONSTER_GENERIC || tile === CONFIG.TILES.BOSS) {
-        combat(nx, ny);
+    if (tile === TILE.POTION) {
+        playEffect(SOUND_DATA.HEAL);
+        gameState.player.hp = Math.min(gameState.player.maxHp, gameState.player.hp + CONFIG.HEAL_VAL);
+        addLog('potion', 'log-player');
+        gameState.map[ny][nx] = TILE.FLOOR;
+    } else if (tile === TILE.STAIRS) {
+        playEffect(SOUND_DATA.STAIRS);
+        gameState.depth++;
+        addLog('stairs', 'log-system', { d: gameState.depth });
+        setupLevel();
     } else {
-        movePlayer(nx, ny, tile); // 移動
-    }
-    
-    // プレイヤーの行動後、ゲームが終わっていなければ敵のターンへ
-    if (!gameState.gameOver) {
-        monstersTurn();
-        updateVision(); 
-        draw();
+        playEffect(SOUND_DATA.MOVE);
     }
 }
 
-// function: 戦闘処理
+// 攻撃成功時の床戻しも修正
 function combat(nx, ny) {
-    playEffect(SOUND_DATA.PLAYER_ATTACK);// 「ザシュッ」という感じの音
+    playEffect(SOUND_DATA.PLAYER_ATTACK);
     const m = gameState.monsters.find(m => m.x === nx && m.y === ny);
     const dmg = gameState.player.atk + Math.floor(Math.random()*5);
     m.hp -= dmg;
@@ -441,9 +370,9 @@ function combat(nx, ny) {
     if (m.hp <= 0) {
         playEffect(SOUND_DATA.DEFEATED);
         addLog('defeat', 'log-system', { nIsMonster: true, monsterObj: m });
-        gameState.map[ny][nx] = '·';
+        gameState.map[ny][nx] = CONFIG.TILES.FLOOR; // ここを修正
         gameState.monsters = gameState.monsters.filter(mon => mon !== m);
-        if (m.isBoss) return endGame(true); // ボス撃破でクリア
+        if (m.isBoss) return endGame(true);
         checkLvUp();
     }
 }
