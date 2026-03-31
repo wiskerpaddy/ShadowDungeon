@@ -57,9 +57,10 @@ function toggleMute() {
 // --- 2. ゲームの状態管理 ---
 let curLang = 'en';
 
-// 図鑑データなどは単独の変数として外に置く
+// ★図鑑データは gameState の外側で宣言します
 let monsterEncyclopedia = JSON.parse(localStorage.getItem('rogue_encyclopedia')) || {};
 
+// ★gameState の中身は「名前: 値,」の形だけで書きます
 let gameState = { 
     depth: 1, 
     player: {}, 
@@ -71,8 +72,8 @@ let gameState = {
     initialized: false,
     totalKills: 0,
     warpCount: 0,
-    bossDefeated: false // オブジェクトの中に入れるなら「let」や「gameState.」は不要
-};
+    bossDefeated: false 
+}; // ここでしっかりセミコロンで閉じる
 
 // --- 3. システム関数 (言語・音効) ---
 function setLang(lang) {
