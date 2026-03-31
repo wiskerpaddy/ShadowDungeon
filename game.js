@@ -57,9 +57,6 @@ function toggleMute() {
 // --- 2. ゲームの状態管理 ---
 let curLang = 'en';
 
-// ★図鑑データは gameState の外側で宣言します
-let monsterEncyclopedia = JSON.parse(localStorage.getItem('rogue_encyclopedia')) || {};
-
 // ★gameState の中身は「名前: 値,」の形だけで書きます
 let gameState = { 
     depth: 1, 
