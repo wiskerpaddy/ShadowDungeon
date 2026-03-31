@@ -89,9 +89,14 @@ function setLang(lang) {
         waitBtn.style.fontSize = T.wait.length > 5 ? "10px" : "14px";
     }
 
-    const skillBtn = document.getElementById('skill');
-    if (skillBtn) {
-        skillBtn.innerHTML = `${T.warpBtn}<br>(HP-5)`; // コスト表示を合わせる
+    const warpBtn = document.getElementById('warp-btn');
+    if (warpBtn) {
+        warpBtn.innerHTML = `${T.warpBtn}<br>(HP-20%)`; // コスト表示を合わせる
+    }
+
+    const shockBtn = document.getElementById('shock-btn');
+    if (shockBtn) {
+        shockBtn.innerHTML = `${T.shockBtn}<br>(HP-20%)`; // コスト表示を合わせる
     }
 
     const gTitle = document.getElementById('g-title');
