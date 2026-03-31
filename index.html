@@ -40,8 +40,10 @@
         
         <div id="controls">
             <div class="btn" id="up" onclick="handleInput(0, -1)">↑</div>
-            <div class="btn" id="skill" onclick="useSkill()">WARP</div>
-            <div class="btn" id="left" onclick="handleInput(-1, 0)">←</div>
+            <div class="btn-group">
+                <div class="btn skill-btn" onclick="useSkill()">WARP</div>
+                <div class="btn skill-btn" onclick="useShockwave()">WAVE</div>
+            </div>            <div class="btn" id="left" onclick="handleInput(-1, 0)">←</div>
             <div class="btn" id="wait" onclick="handleInput(0, 0)">WAIT</div>
             <div class="btn" id="right" onclick="handleInput(1, 0)">→</div>
             <div class="btn" id="down" onclick="handleInput(0, 1)">↓</div>

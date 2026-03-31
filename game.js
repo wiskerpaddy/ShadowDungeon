@@ -289,6 +289,15 @@ function combat(nx, ny) {
     m.hp -= dmg;
     addLog('attack', 'log-player', { nIsMonster: true, monsterObj: m, dmg: dmg });
     if (m.hp <= 0) {
+        // 図鑑に登録
+        const mName = i18n[curLang].mNames[m.typeIndex];
+        monsterEncyclopedia[mName] = (monsterEncyclopedia[mName] || 0) + 1;
+        localStorage.setItem('rogue_encyclopedia', JSON.stringify(monsterEncyclopedia));
+        
+        // 全種類（3種）を1回以上倒したら実績解除
+        if (Object.keys(monsterEncyclopedia).length >= 3) {
+            checkAchievements(); // 「図鑑コンプリート」の実績をACHIEVEMENTSに足しておきましょう
+        }
         gameState.totalKills++; // 討伐数を加算
         // --- ここからボス撃破判定 ---
         if (m.isBoss) {
@@ -466,6 +475,27 @@ function toggleAchievements() {
     } else {
         overlay.style.display = 'none';
     }
+}
+
+function useShockwave() {
+    if (gameState.player.hp <= CONFIG.SHOCKWAVE_COST) return;
+    
+    gameState.player.hp -= CONFIG.SHOCKWAVE_COST;
+    playEffect({freq: 150, type: 'sawtooth', dur: 0.3, gain: 0.1});
+    
+    // 周囲1マスの敵すべてにダメージ
+    gameState.monsters.forEach(m => {
+        const dx = Math.abs(m.x - gameState.player.x);
+        const dy = Math.abs(m.y - gameState.player.y);
+        if (dx <= 1 && dy <= 1) {
+            m.hp -= 15; // 固定ダメージ
+            addLog(`${i18n[curLang].bName}に衝撃波！`, 'log-player');
+        }
+    });
+    
+    // 敵のターンへ
+    monstersTurn();
+    draw();
 }
 
 function endGame(win) { gameState.gameOver = true; alert(win ? i18n[curLang].win : i18n[curLang].lose); location.reload(); }

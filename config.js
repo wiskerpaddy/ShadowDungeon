@@ -8,6 +8,7 @@ const CONFIG = {
     MAX_DEPTH: 5,   // ボスが登場する階層
     WARP_COST: 5,   // ワープスキル使用時のHP消費量
     HEAL_VAL: 12,    // 回復アイテム(L)の回復量
+    SHOCKWAVE_COST: 8, // 固定ダメージでHPを消費
 
 // タイルやエンティティの記号定義
     TILES: {
@@ -78,8 +79,19 @@ const ACHIEVEMENTS = {
     }
 };
 
+// 敵ごとの詳細データ（図鑑表示用）
+const MONSTER_DATA = [
+    { name: "ノイズ・ラット", desc: "不快な足音を立てるネズミ。群れると厄介。" },
+    { name: "不協和音の鎧", desc: "古い甲冑に音が宿ったもの。防御力が高い。" },
+    { name: "沈黙の眼", desc: "視線が合うと音を奪われる。遠距離から凝視してくる。" }
+];
+
 // 達成済みのIDを保存する配列
 let unlockedAchievements = JSON.parse(localStorage.getItem('rogue_achievements')) || [];
+
+// 討伐記録（初期値または保存データから読み込み）
+let monsterEncyclopedia = JSON.parse(localStorage.getItem('rogue_encyclopedia')) || {};
+
 
 
 /**
