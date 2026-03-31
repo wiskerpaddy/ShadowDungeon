@@ -76,15 +76,30 @@ let gameState = {
 function setLang(lang) {
     curLang = lang;
     const T = i18n[curLang];
+    
+    // 言語ボタンのスタイル更新
     document.querySelectorAll('.lang-btn').forEach(b => b.classList.remove('active'));
     const activeBtn = document.getElementById(`btn-${lang}`);
     if(activeBtn) activeBtn.classList.add('active');
+
+    // ★ ここから下：要素が存在する場合のみ実行するように修正
     const waitBtn = document.getElementById('wait');
-    waitBtn.textContent = T.wait;
-    waitBtn.style.fontSize = T.wait.length > 5 ? "10px" : "14px";
-    document.getElementById('skill').innerHTML = `${T.warpBtn}<br>(HP-20%)`;
-    document.getElementById('g-title').textContent = T.gTitle;
-    document.getElementById('g-body').innerHTML = T.gBody;
+    if (waitBtn) {
+        waitBtn.textContent = T.wait;
+        waitBtn.style.fontSize = T.wait.length > 5 ? "10px" : "14px";
+    }
+
+    const skillBtn = document.getElementById('skill');
+    if (skillBtn) {
+        skillBtn.innerHTML = `${T.warpBtn}<br>(HP-5)`; // コスト表示を合わせる
+    }
+
+    const gTitle = document.getElementById('g-title');
+    if (gTitle) gTitle.textContent = T.gTitle;
+
+    const gBody = document.getElementById('g-body');
+    if (gBody) gBody.innerHTML = T.gBody;
+
     if (gameState.initialized) draw();
 }
 
