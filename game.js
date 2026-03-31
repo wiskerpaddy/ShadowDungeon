@@ -56,12 +56,22 @@ function toggleMute() {
 
 // --- 2. ゲームの状態管理 ---
 let curLang = 'en';
+
+// 図鑑データなどは単独の変数として外に置く
+let monsterEncyclopedia = JSON.parse(localStorage.getItem('rogue_encyclopedia')) || {};
+
 let gameState = { 
-    depth: 1, player: {}, map: [], explored: [], monsters: [], log: [], 
-    gameOver: false, initialized: false,
-    // --- 追加: 実績用カウント ---
+    depth: 1, 
+    player: {}, 
+    map: [], 
+    explored: [], 
+    monsters: [], 
+    log: [], 
+    gameOver: false, 
+    initialized: false,
     totalKills: 0,
-    warpCount: 0
+    warpCount: 0,
+    bossDefeated: false // オブジェクトの中に入れるなら「let」や「gameState.」は不要
 };
 
 // --- 3. システム関数 (言語・音効) ---
@@ -285,36 +295,41 @@ function movePlayer(nx, ny, tile) {
 function combat(nx, ny) {
     playEffect(SOUND_DATA.PLAYER_ATTACK);
     const m = gameState.monsters.find(m => m.x === nx && m.y === ny);
+    if (!m) return; // 念のため
+
     const dmg = gameState.player.atk + Math.floor(Math.random()*5);
     m.hp -= dmg;
     addLog('attack', 'log-player', { nIsMonster: true, monsterObj: m, dmg: dmg });
+
     if (m.hp <= 0) {
-        // 図鑑に登録
-        const mName = i18n[curLang].mNames[m.typeIndex];
+        // --- 図鑑登録処理 ---
+        const mName = i18n[curLang].mNames[m.typeIndex] || (m.isBoss ? i18n[curLang].bName : "Unknown");
         monsterEncyclopedia[mName] = (monsterEncyclopedia[mName] || 0) + 1;
         localStorage.setItem('rogue_encyclopedia', JSON.stringify(monsterEncyclopedia));
         
-        // 全種類（3種）を1回以上倒したら実績解除
         if (Object.keys(monsterEncyclopedia).length >= 3) {
-            checkAchievements(); // 「図鑑コンプリート」の実績をACHIEVEMENTSに足しておきましょう
+            checkAchievements();
         }
-        gameState.totalKills++; // 討伐数を加算
-        // --- ここからボス撃破判定 ---
+
+        gameState.totalKills++;
+
         if (m.isBoss) {
-            gameState.bossDefeated = true; // フラグを立てる
-            checkAchievements();           // レベルに応じた実績を即座にチェック
+            gameState.bossDefeated = true;
+            checkAchievements();
             playEffect(SOUND_DATA.DEFEATED);
             addLog('defeat', 'log-system', { nIsMonster: true, monsterObj: m });
-            return endGame(true); 
+            return endGame(true); // ゲーム勝利
         }
-        // --------------------------
-        checkAchievements();    // チェック
+
         playEffect(SOUND_DATA.DEFEATED);
         addLog('defeat', 'log-system', { nIsMonster: true, monsterObj: m });
+        
+        // 敵を除去
         gameState.map[ny][nx] = CONFIG.TILES.FLOOR;
         gameState.monsters = gameState.monsters.filter(mon => mon !== m);
-        if (m.isBoss) return endGame(true);
+        
         checkLvUp();
+        checkAchievements();
     }
 }
 
