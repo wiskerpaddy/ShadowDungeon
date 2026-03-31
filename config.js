@@ -117,6 +117,7 @@ const i18n = {
         floor: "FL", 
         wait: "待機", 
         warpBtn: "ワープ",
+        shockBtn: "ショック",
         mNames: ["ノイズ・ラット", "不協和音の鎧", "沈黙の眼"], 
         bName: "古の指揮者",
         win: "伝説の奏者となった！", 
@@ -141,6 +142,7 @@ const i18n = {
         floor: "FL", 
         wait: "WAIT", 
         warpBtn: "WARP",
+        shockBtn: "SHOCK",
         mNames: ["Noise Rat", "Discord Armor", "Silent Eye"], 
         bName: "Ancient Conductor",
         win: "Legend Soloist!", 
@@ -164,7 +166,8 @@ const i18n = {
         atk: "ATQ", 
         floor: "PISO", 
         wait: "ESPERA", 
-        warpBtn: "WARP",
+        warpBtn: "DEFORMA",
+        shockBtn: "IMPULSO",
         mNames: ["Rata Ruido", "Armadura Discord", "Ojo Silencio"], 
         bName: "Director Antiguo",
         win: "¡Solista de leyenda!", 
@@ -206,6 +209,12 @@ const SOUND_DATA = {
     
     // ワープ：空間がねじれるような、滑らかな上昇音
     WARP: [
+        { freq: 440, type: 'triangle', dur: 0.1, gain: 0.03 }, // ラ
+        { freq: 660, type: 'triangle', dur: 0.1, gain: 0.03 }, // ミ
+        { freq: 880, type: 'triangle', dur: 0.1, gain: 0.02 }, // 高いラ
+        { freq: 1320, type: 'sine',     dur: 0.4, gain: 0.01 }  // 非常に高いミ（サイン波で柔らかく締める）
+    ],
+    SHOCK: [
         { freq: 440, type: 'triangle', dur: 0.1, gain: 0.03 }, // ラ
         { freq: 660, type: 'triangle', dur: 0.1, gain: 0.03 }, // ミ
         { freq: 880, type: 'triangle', dur: 0.1, gain: 0.02 }, // 高いラ

@@ -17,12 +17,13 @@
     .btn { width: 75px; height: 75px; background-color: #222; border: 1px solid #555; color: white; display: flex; justify-content: center; align-items: center; border-radius: 8px; cursor: pointer; font-size: 18px; }
     .btn:active { background-color: #444; }
     
+    #warp-btn { grid-column: 1; grid-row: 1; background-color: #422; border-color: #a55; color: #f88; font-size: 10px; }
     #up { grid-column: 2; grid-row: 1; }
+    #shock-btn { grid-column: 3; grid-row: 1; background-color: #422; border-color: #a55; color: #f88; font-size: 10px; }
     #left { grid-column: 1; grid-row: 2; }
     #wait { grid-column: 2; grid-row: 2; background-color: #333; font-size: 12px; word-break: break-all; padding: 2px; }
     #right { grid-column: 3; grid-row: 2; }
     #down { grid-column: 2; grid-row: 3; }
-    #skill { grid-column: 3; grid-row: 1; background-color: #422; border-color: #a55; color: #f88; font-size: 10px; }
 
     .log-player { color: #fff; } 
     .log-enemy { color: #ff5555; } 
