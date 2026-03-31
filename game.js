@@ -71,7 +71,7 @@ function setLang(lang) {
     const waitBtn = document.getElementById('wait');
     waitBtn.textContent = T.wait;
     waitBtn.style.fontSize = T.wait.length > 5 ? "10px" : "14px";
-    document.getElementById('skill').innerHTML = `${T.warpBtn}<br>(HP-5)`;
+    document.getElementById('skill').innerHTML = `${T.warpBtn}<br>(HP-20%)`;
     document.getElementById('g-title').textContent = T.gTitle;
     document.getElementById('g-body').innerHTML = T.gBody;
     if (gameState.initialized) draw();
@@ -321,6 +321,15 @@ function useSkill() {
         // 現在のHPの20%を計算（端数切り上げ）
         const cost = Math.ceil(gameState.player.hp * 0.2);
         gameState.player.hp -= cost;
+
+        // --- 追加: 自傷ダメージによる死亡チェック ---
+        if (gameState.player.hp <= 0) {
+            gameState.player.hp = 0; // 表示を0に固定
+            draw(); // 最後の状態を描画
+            endGame(false); 
+            return; // 以降のワープ処理を中断
+        }
+        // ---------------------------------------
 
         // 演出：画面をフラッシュさせる
         const screen = document.getElementById('screen');
