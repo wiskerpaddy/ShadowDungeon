@@ -4,45 +4,166 @@ let bgmNextTime = 0;
 let isMuted = false;
 let bgmTimer = null;
 let audioCtx = null;
+let wordsData = []; // ここに words.json をロードする想定
+let currentCardIdx = 0;
+let cardFlipped = false;
+
+// --- モード開始処理 ---
+function startAdventureMode() {
+    // 1. 画面の切り替え
+    document.getElementById('guide-overlay').style.display = 'none';
+    
+    // 2. AudioContextの初期化と再開 (重要！)
+    handleAudioResume();
+
+    // 3. ゲームの初期化
+    if (!gameState.initialized) {
+        init();
+    } else {
+        draw();
+    }
+}
+
+function startStudyMode() {
+    document.getElementById('guide-overlay').style.display = 'none';
+    document.getElementById('study-screen').style.display = 'flex';
+    
+    // ★ テスト用にデータを無理やり入れる（本来はfetchで取得）
+    if (wordsData.length === 0) {
+        wordsData = [
+            {q: "794年、平安京に都を移したのは？", a: "桓武天皇"},
+            {q: "1192年、鎌倉幕府を開いたのは？", a: "源頼朝"},
+            {q: "1543年、鉄砲が伝来した場所は？", a: "種子島"}
+        ];
+    }
+    
+    currentCardIdx = 0; // 最初のカードから
+    showCard();
+}
+
+// --- オーディオ再開用の共通関数 ---
+function handleAudioResume() {
+    if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    
+    if (audioCtx.state === 'suspended') {
+        audioCtx.resume().then(() => {
+            console.log("Playback resumed successfully");
+            // ミュートでなければBGM開始
+            if (!bgmTimer && !isMuted) {
+                playBGM();
+            }
+        });
+    } else {
+        // すでに動いている場合でBGMが止まっていたら再開
+        if (!bgmTimer && !isMuted) {
+            playBGM();
+        }
+    }
+}
+
+function backToMenu() {
+    document.getElementById('study-screen').style.display = 'none';
+    document.getElementById('guide-overlay').style.display = 'flex';
+}
+
+// --- 暗記カードロジック ---
+function handleStudyClick() {
+    if (!cardFlipped) {
+        // 答えを表示
+        document.getElementById('card-a').classList.remove('hidden');
+        cardFlipped = true;
+    } else {
+        // 次のカードへ
+        currentCardIdx = (currentCardIdx + 1) % wordsData.length;
+        showCard();
+    }
+}
+
+function showCard() {
+    // データの存在チェック（これがないとエラーで止まる）
+    if (!wordsData || wordsData.length === 0) {
+        document.getElementById('card-q').textContent = "データがありません";
+        document.getElementById('card-a').textContent = "words.jsonを確認してください";
+        return;
+    }
+
+    cardFlipped = false;
+    const card = wordsData[currentCardIdx];
+    
+    // card自体が取得できなかった場合の安全策
+    if (card) {
+        document.getElementById('card-q').textContent = card.q;
+        document.getElementById('card-a').textContent = card.a;
+        document.getElementById('card-a').classList.add('hidden');
+        document.getElementById('study-progress').textContent = `${currentCardIdx + 1} / ${wordsData.length}`;
+    }
+}
+
+// エンターキーでも操作可能に
+window.addEventListener('keydown', (e) => {
+    if (document.getElementById('study-screen').style.display === 'flex') {
+        if (e.key === 'Enter') handleStudyClick();
+    }
+});
 
 function playBGM() {
     if (isMuted || !audioCtx) return;
 
+    // 1. トラックの取得と安全確認
+    const isBossFloor = (gameState && gameState.depth === CONFIG.MAX_DEPTH);
+    const track = isBossFloor ? SOUND_DATA.BGM_BOSS : SOUND_DATA.BGM_TRACK;
+    
+    if (!track || track.length === 0) return;
+
+    // 2. 現在のノートを取得
+    const note = track[bgmIndex % track.length];
+    if (!note || !note.freq) {
+        bgmIndex++; // 次へ進めて脱出
+        bgmTimer = setTimeout(playBGM, 100);
+        return;
+    }
+
+    const isBossAlive = gameState.monsters && gameState.monsters.some(m => m.isBoss);
+    const currentDur = isBossAlive ? note.dur / 2 : note.dur;
     const now = audioCtx.currentTime;
     if (bgmNextTime < now) bgmNextTime = now;
 
-    // --- 階層による曲の切り替え ---
-    // 現在の階が最大階層(MAX_DEPTH)ならボス曲、それ以外なら通常曲を選択
-    const isBossFloor = (gameState.depth === CONFIG.MAX_DEPTH);
-    const track = isBossFloor ? SOUND_DATA.BGM_BOSS : SOUND_DATA.BGM_TRACK;
+    // --- 3. メロディと和音の生成 ---
+    // oscillator を2つ作り、それぞれを単独の Gain に繋いで出力します
     
-    // インデックスが配列外にならないよう調整
-    const note = track[bgmIndex % track.length];
-    
-    // ボス戦中（ボスがまだ生きている）なら、さらにテンポを速く、音を激しくする
-    const isBossAlive = gameState.monsters.some(m => m.isBoss);
-    const currentDur = isBossAlive ? note.dur / 2 : note.dur;
-    const currentType = isBossAlive ? 'sawtooth' : 'triangle';
+    // 【主旋律】
+    const osc1 = audioCtx.createOscillator();
+    const g1 = audioCtx.createGain();
+    osc1.type = isBossAlive ? 'sawtooth' : 'triangle';
+    osc1.frequency.setValueAtTime(note.freq, bgmNextTime);
+    g1.gain.setValueAtTime(0.02, bgmNextTime);
+    g1.gain.exponentialRampToValueAtTime(0.001, bgmNextTime + currentDur);
+    osc1.connect(g1).connect(audioCtx.destination);
 
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
+    // 【伴奏：完全5度上の音】
+    // 周波数を「1.5倍」にすると、音楽的に最も安定した「ドとソ」の関係（和音）になります
+    // さらに1オクターブ下（0.75倍）にすることで厚みを出します
+    const osc2 = audioCtx.createOscillator();
+    const g2 = audioCtx.createGain();
+    osc2.type = 'sine'; 
+    osc2.frequency.setValueAtTime(note.freq * 0.75, bgmNextTime); 
+    g2.gain.setValueAtTime(0.015, bgmNextTime);
+    g2.gain.exponentialRampToValueAtTime(0.001, bgmNextTime + currentDur);
+    osc2.connect(g2).connect(audioCtx.destination);
 
-    osc.type = currentType; 
-    osc.frequency.setValueAtTime(note.freq, bgmNextTime);
-    
-    gain.gain.setValueAtTime(0.03, bgmNextTime);
-    gain.gain.exponentialRampToValueAtTime(0.001, bgmNextTime + currentDur);
+    // 4. 同時再生
+    osc1.start(bgmNextTime);
+    osc1.stop(bgmNextTime + currentDur);
+    osc2.start(bgmNextTime);
+    osc2.stop(bgmNextTime + currentDur);
 
-    osc.connect(gain);
-    gain.connect(audioCtx.destination);
-
-    osc.start(bgmNextTime);
-    osc.stop(bgmNextTime + currentDur);
-
+    // 5. 次の準備
     bgmNextTime += currentDur;
-    // track.length を使うことで、曲の長さに合わせてループ
     bgmIndex = (bgmIndex + 1) % track.length;
 
+    // 6. ループ
     bgmTimer = setTimeout(playBGM, currentDur * 1000);
 }
 
@@ -553,3 +674,4 @@ window.onload = () => {
     setLang(['ja', 'en', 'es'].includes(browserLang) ? browserLang : 'en');
     openGuide();
 };
+

@@ -170,3 +170,17 @@
         text-shadow: none;
     }
 }
+
+.mode-btn {
+    display: block; width: 80%; margin: 10px auto; padding: 15px;
+    background: #444; color: #fff; border: 2px solid #888; cursor: pointer;
+}
+#study-screen {
+    position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+    background: #000; color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center;
+}
+#card-display {
+    width: 80%; height: 200px; border: 1px solid #444; padding: 20px; text-align: center;
+    display: flex; flex-direction: column; justify-content: center; font-size: 18px;
+}
+.hidden { visibility: hidden; }
