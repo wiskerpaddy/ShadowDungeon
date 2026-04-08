@@ -29,27 +29,10 @@
             </div>
         </div>
 
-        <div id="guide-overlay">
-            <div class="guide-title" id="g-title">SHADOW DUNGEON</div>
-            <div class="guide-text" id="g-body">モードを選択してください</div>
-            
-            <div class="menu-buttons">
-                <button class="mode-btn" onclick="startStudyMode()">🗂 暗記カードモード</button>
-                <button class="mode-btn" onclick="startAdventureMode()">⚔ 冒険モード</button>
-            </div>
-        </div>
-
-        <div id="study-screen" style="display:none;" onclick="handleStudyClick()">
-            <div id="study-top">
-                <button class="lang-btn" onclick="backToMenu()">🏠 Menu</button>
-                <div id="study-progress">0 / 0</div>
-            </div>
-            <div id="card-display">
-                <div id="card-q">問題がここに表示されます</div>
-                <hr>
-                <div id="card-a" class="hidden">答えがここに表示されます</div>
-            </div>
-            <div class="study-footer">Tap or Enter to Flip / Next</div>
+        <div id="guide-overlay" onclick="closeGuide()">
+            <div class="guide-title" id="g-title"></div>
+            <div class="guide-text" id="g-body"></div>
+            <div style="font-size:11px; color:#888;">Tap to Start / 画面をタップして開始</div>
         </div>
 
         <div id="screen"></div>
